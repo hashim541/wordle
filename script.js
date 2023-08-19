@@ -52,6 +52,7 @@ function checkWord(user,api,tryss){
         for(i=0;i<currWordLength;i++){
             level.children[i].classList.add('bgcolor-green')
         }
+        transitions();
     }else{
         for(i=0;i<currWordLength;i++){
             if(user[i] in dummy && user[i]== api[i] && dummy[user[i]] >0){
