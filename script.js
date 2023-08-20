@@ -22,129 +22,175 @@ document.querySelector('.settings').addEventListener('click',function(){
 document.querySelector('.wrong').addEventListener('click',function(){
     document.querySelector('.setting-cont').classList.remove('visible');
 })
-var word=[];
-var apiWord='shark';
-var array=[]
-var ii=0;
-var tryss=0;
-document.querySelectorAll('.len-btn').forEach(btns=>{
-    btns.addEventListener('click',function(){
-        $('.len-btn').removeClass('selected-len')
-        console.log(this);
-        this.classList.add('selected-len')
-        gameRestart(this.value);
-    })
+
+$('.len-btn').click(function(){
+    currWordLength=this.value;
+    apiWord=words(currWordLength);
+    $('.len-btn').removeClass('selected-len');
+    this.classList.add('selected-len');
     
+    $('.try').html('')
+    lengthOfWord(currWordLength)
+    document.querySelector('.setting-cont').classList.remove('visible');
+    userWord=[];
+    
+    
+    array=[];
+    trys=0;
+    i=0;
 })
 
+const valid=/^[\a-\z]+$/;
+var userWord=[];
+var apiWord=words(currWordLength);
+var array=[];
+var trys=0;
+var i=0;
+var wordFound=false;
 
 
-const valid=/^[\a-\z]+$/
+const boxes=document.querySelectorAll('.try')
 
 document.querySelector('body').addEventListener('keyup',function(e){
-    main(e.key);
+    currLetter=e.key;
+    main(currLetter);
+})
+$('.key').click(function(){
+    currLetter=this.value;
+    
+    main(currLetter.toString())
 })
 
-function checkWord(user,api,tryss){
-    var level=document.querySelector('.try'+(tryss+1))
-    var dummy=intoObject(api);
-    if(user == api){
-        for(i=0;i<currWordLength;i++){
-            level.children[i].classList.add('bgcolor-green')
-        }
-        transitions();
-    }else{
-        for(i=0;i<currWordLength;i++){
-            if(user[i] in dummy && user[i]== api[i] && dummy[user[i]] >0){
-                dummy[user[i]]--;
-                level.children[i].classList.add('bgcolor-green')
-            }
-            
-        }
+async function main(currLetter){
+    if(valid.test(currLetter) && userWord.length <= currWordLength-1 ){
+        userWord.push(currLetter.toUpperCase())
+        boxes[trys].children[i].textContent=currLetter.toUpperCase();
+        i++;
+    }
+    if(currLetter == 'Backspace' && (userWord.length <= currWordLength && userWord.length>0)){
+        i--;
+        userWord.pop();
+        boxes[trys].children[i].textContent='';
+    }
 
-        for(j=0;j<currWordLength;j++){
-            if(user[j] in dummy && user[j]!= api[j] && dummy[user[j]] >0){
-                dummy[user[j]]--;
-                level.children[j].classList.add('bgcolor-yellow')
-            }
-        }
-
-        for(k=0;k<currWordLength;k++){
-            if(user[k] in dummy && dummy[user[k]]>0){
-
+    
+    if(currLetter == 'Enter' && userWord.length == currWordLength ){
+        var bool = await apiUserWord(userWord.join(''))
+        setTimeout(function(){
+            if(bool == true){
+                array.push(userWord.join(''))
+                checkWord(array[trys],apiWord,trys);
+                userWord=[];
+                trys++;
+                i=0;
             }else{
-                level.children[k].classList.add('bgcolor-grey')
+                document.querySelector('.word').classList.add('vis')
+                setTimeout(function(){
+                    document.querySelector('.word').classList.remove('vis') 
+                },900)
+            }
+        },500)
+    }
+    if(trys > 5){
+        gameOver();
+    }
+}
+
+    async function apiUserWord(word) {
+        try {
+            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+            if(response.status === 200){return true;} 
+        } catch (err) {
+            return false;
+    }
+    }
+
+
+function checkWord(user,apiWord,trys){
+    var dummyWord=[];
+    var dummynum=[];
+    for(var kk=0;kk<apiWord.length;kk++){
+        if(dummyWord.includes(apiWord[kk])){
+            dummynum[dummyWord.indexOf(apiWord[kk])]+=1;
+        }else{
+            dummyWord.push(apiWord[kk]);
+            dummynum.push(1)
+        }
+    }
+    var eachTry=$('.try'+(trys+1));
+    if(user == apiWord){
+        eachTry.children().addClass('bgcolor-green')
+        setTimeout(function(){
+            apiWord=words(currWordLength);
+            gameOver();
+        },1000)
+    }else{
+        for(var ii=0;ii<userWord.length;ii++){
+            if(user[ii]==apiWord[ii] && dummyWord.includes(user[ii]) && dummynum[dummyWord.indexOf(user[ii])]>0){
+                eachTry.children(`:nth-child(${ii+1})`).addClass('bgcolor-green');
+                dummynum[dummyWord.indexOf(user[ii])]-=1;
             }
         }
-        
-    }
-}
 
-function intoObject(api){
-    var a=api.split('');
-    var res=new Object();
-    a.forEach(i=>{
-        if(i in res){
-            res[i]++;
-        }else{
-            res[i]=1;
+        for(var ij=0;ij<userWord.length;ij++){
+            if(user[ij]!=apiWord[ij] && dummyWord.includes(user[ij]) && dummynum[dummyWord.indexOf(user[ij])]>0){
+                eachTry.children(`:nth-child(${ij+1})`).addClass('bgcolor-yellow');
+                dummynum[dummyWord.indexOf(user[ij])]-=1;
+            }
         }
-    })
-    console.log(res)
-    return res;
+        for(var ik=0;ik<userWord.length;ik++){
+            if(dummyWord.includes(user[ik]) && dummynum[dummyWord.indexOf(user[ik])]>0){
+                
+            }else{
+                eachTry.children(`:nth-child(${ik+1})`).addClass('bgcolor-grey');
+            }
+        }
+    }
+
 }
 
 
-function main(v){
-    var currLetter=v;
-    
-    if(valid.test(currLetter) && word.length <= currWordLength-1){
-        word.push(currLetter.toUpperCase())
-        eachLevel[tryss].children[ii].textContent=word[ii]
-        ii++;
-    }
-
-    if(currLetter == 'Backspace' &&(word.length >0 && word.length <= currWordLength)){
-        ii--;
-        word.pop()
-        eachLevel[tryss].children[ii].textContent='';
-        
-    }
-    if(currLetter == 'Enter' && word.length==currWordLength){
-        array.push(word.join(''))
-        console.log(array[tryss])
-        checkWord(array[tryss],apiWord.toUpperCase(),tryss);
-        word=[];
-        tryss++;
-        ii=0;   
-    }
-    if(tryss>5){
-        transitions()
-    }
+function gameOver(){
+    $('.api-word')[0].textContent=apiWord;
+    $('.gameOver').addClass('vis')
 }
 
-function gameRestart(val){
-    document.querySelector('.setting-cont').classList.remove('visible');
-    eachLevel.forEach(i=>{
-        i.innerHTML='';
-    })
+$('.play').click(function(){
     
-    $('.box').text='';
-    currWordLength=val;
+    $('.gameOver').removeClass('vis');
+    $('.try').html('')
     lengthOfWord(currWordLength)
-    word=[];
-    ii=0;
-    tryss=0;
+    userWord=[];
+    
+    
+    array=[];
+    trys=0;
+    i=0;
+})
+
+function words(length){
+randomWord(length)
+
+
+async function randomWord(length){
+    var res = await fetch(`https://random-word-api.herokuapp.com/word?length=${length}`)
+    var word = await res.json()
+    
+    if(await checkWordInApi(word)){
+        
+        apiWord= word[0].toUpperCase();
+        console.log(apiWord)
+    }else{
+        return randomWord(length);
+    }
 }
-function transitions(){
-    setTimeout(function(){
-        document.querySelector('.api-word').innerText=apiWord.toUpperCase();
-        document.querySelector('.gameOver').classList.add('vis');
-    },1000)
-    clearTimeout();
-    setTimeout(function(){
-        gameRestart(currWordLength);
-        document.querySelector('.gameOver').classList.remove('vis');
-    },5000)
-    clearTimeout();
+
+async function checkWordInApi(word) {
+    try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        return response.status === 200; 
+    } catch (err) {
+        return false;
+}
+}
 }
