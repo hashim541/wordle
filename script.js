@@ -50,7 +50,9 @@ var wordFound=false;
 
 
 const boxes=document.querySelectorAll('.try')
-
+if(trys > 5){
+    gameOver();
+}
 document.querySelector('body').addEventListener('keyup',function(e){
     currLetter=e.key;
     main(currLetter);
@@ -75,6 +77,7 @@ async function main(currLetter){
 
     
     if(currLetter == 'Enter' && userWord.length == currWordLength ){
+        
         var bool = await apiUserWord(userWord.join(''))
         setTimeout(function(){
             if(bool == true){
@@ -82,6 +85,9 @@ async function main(currLetter){
                 checkWord(array[trys],apiWord,trys);
                 userWord=[];
                 trys++;
+                if(trys > 5){
+                    gameOver();
+                }
                 i=0;
             }else{
                 document.querySelector('.word').classList.add('vis')
@@ -90,10 +96,10 @@ async function main(currLetter){
                 },900)
             }
         },500)
+        
     }
-    if(trys > 5){
-        gameOver();
-    }
+    
+    
 }
 
     async function apiUserWord(word) {
@@ -146,6 +152,7 @@ function checkWord(user,apiWord,trys){
             }
         }
     }
+    
 
 }
 
@@ -161,7 +168,7 @@ $('.play').click(function(){
     $('.try').html('')
     lengthOfWord(currWordLength)
     userWord=[];
-    
+    apiWord=words(currWordLength);
     
     array=[];
     trys=0;
