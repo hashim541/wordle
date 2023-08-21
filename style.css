@@ -17,6 +17,7 @@
 .dark-mode {
     --white: black;
     --primary: white;
+    --primary-rgba:white;
     --green:rgb(4, 255, 117) ;
     --gold:gold;
     --box-shadow-rgba:rgb(187, 187, 187);
