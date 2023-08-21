@@ -22,11 +22,16 @@ document.querySelector('.settings').addEventListener('click',function(){
 document.querySelector('.wrong').addEventListener('click',function(){
     document.querySelector('.setting-cont').classList.remove('visible');
 })
+document.querySelector('.dark-btn').addEventListener('click',function(){
+    document.body.classList.toggle('dark-mode')
+    document.querySelector('.dark-btn').classList.toggle('posi')
+})
 
 $('.len-btn').click(function(){
     currWordLength=this.value;
     apiWord=words(currWordLength);
     $('.len-btn').removeClass('selected-len');
+    removeKeyBoardColor();
     this.classList.add('selected-len');
     
     $('.try').html('')
@@ -67,6 +72,11 @@ async function main(currLetter){
     if(valid.test(currLetter) && userWord.length <= currWordLength-1 ){
         userWord.push(currLetter.toUpperCase())
         boxes[trys].children[i].textContent=currLetter.toUpperCase();
+        boxes[trys].children[i].classList.add('trans')
+        setTimeout(()=>{
+            boxes[trys].children[i].classList.remove('trans')
+        },1)
+        
         i++;
     }
     if(currLetter == 'Backspace' && (userWord.length <= currWordLength && userWord.length>0)){
@@ -95,7 +105,7 @@ async function main(currLetter){
                     document.querySelector('.word').classList.remove('vis') 
                 },900)
             }
-        },500)
+        },250)
         
     }
     
@@ -127,14 +137,15 @@ function checkWord(user,apiWord,trys){
     if(user == apiWord){
         eachTry.children().addClass('bgcolor-green')
         setTimeout(function(){
-            apiWord=words(currWordLength);
             gameOver();
         },1000)
+        clearTimeout();
     }else{
         for(var ii=0;ii<userWord.length;ii++){
             if(user[ii]==apiWord[ii] && dummyWord.includes(user[ii]) && dummynum[dummyWord.indexOf(user[ii])]>0){
                 eachTry.children(`:nth-child(${ii+1})`).addClass('bgcolor-green');
                 dummynum[dummyWord.indexOf(user[ii])]-=1;
+                keyBoardColor(user[ii],'bgcolor-green')
             }
         }
 
@@ -142,6 +153,7 @@ function checkWord(user,apiWord,trys){
             if(user[ij]!=apiWord[ij] && dummyWord.includes(user[ij]) && dummynum[dummyWord.indexOf(user[ij])]>0){
                 eachTry.children(`:nth-child(${ij+1})`).addClass('bgcolor-yellow');
                 dummynum[dummyWord.indexOf(user[ij])]-=1;
+                keyBoardColor(user[ij],'bgcolor-yellow')
             }
         }
         for(var ik=0;ik<userWord.length;ik++){
@@ -149,13 +161,24 @@ function checkWord(user,apiWord,trys){
                 
             }else{
                 eachTry.children(`:nth-child(${ik+1})`).addClass('bgcolor-grey');
+                keyBoardColor(user[ik],'bgcolor-grey')
             }
         }
     }
-    
-
 }
 
+function keyBoardColor(user,addStyle){
+    document.querySelectorAll('.key').forEach(i=>{
+        if(i.value.toUpperCase() == user){
+            i.classList.add(addStyle)
+        }
+    })
+}
+function removeKeyBoardColor(){
+    $('.key').removeClass('bgcolor-green')
+    $('.key').removeClass('bgcolor-yellow')
+    $('.key').removeClass('bgcolor-grey')
+}
 
 function gameOver(){
     $('.api-word')[0].textContent=apiWord;
@@ -163,7 +186,7 @@ function gameOver(){
 }
 
 $('.play').click(function(){
-    
+    removeKeyBoardColor();
     $('.gameOver').removeClass('vis');
     $('.try').html('')
     lengthOfWord(currWordLength)
@@ -180,12 +203,20 @@ randomWord(length)
 
 
 async function randomWord(length){
+    setTimeout(()=>{
+        $('.guess-word').addClass('vis')
+    },500)
+    clearTimeout();
     var res = await fetch(`https://random-word-api.herokuapp.com/word?length=${length}`)
     var word = await res.json()
     
     if(await checkWordInApi(word)){
         
         apiWord= word[0].toUpperCase();
+        setTimeout(()=>{
+            $('.guess-word').removeClass('vis')
+        },500)
+        
         console.log(apiWord)
     }else{
         return randomWord(length);
